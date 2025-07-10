@@ -1,0 +1,57 @@
+# .github/workflows/ci.yml
+name: C++ CI + Coverage
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+
+env:
+  BUILD_DIR: build
+  CXXFLAGS: "--coverage -O0 -g"
+
+jobs:
+  build-test-cover:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain & lcov
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake lcov
+
+      - name: Configure
+        run: |
+          cmake -S . -B $BUILD_DIR \
+                -DCMAKE_BUILD_TYPE=Debug \
+                -DCMAKE_CXX_FLAGS="${CXXFLAGS}"
+
+      - name: Build
+        run: cmake --build $BUILD_DIR --parallel
+
+      - name: Run unit tests
+        run: ctest --test-dir $BUILD_DIR --output-on-failure
+
+      - name: Collect coverage (lcov)
+        run: |
+          lcov  --capture --directory $BUILD_DIR --output-file coverage.info
+          lcov  --remove  coverage.info '/usr/*' '/opt/*' --output-file coverage.info
+          lcov  --list    coverage.info
+
+      - name: Generate HTML report
+        run: genhtml coverage.info --output-directory coverage_html
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage_html
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage.info
+          flags: unittests
+          fail_ci_if_error: true
