@@ -9,3 +9,6 @@ target_link_libraries(
         PRIVATE CalcLib
         PRIVATE gtest gmock gtest_main
 )
+
+include(GoogleTest)
+gtest_discover_tests(Calculator_test)

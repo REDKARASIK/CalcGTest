@@ -11,6 +11,10 @@ add_library(CalcLib
         InMemoryHistory.h InMemoryHistory.cpp
 )
 
+target_include_directories(CalcLib
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 include(FetchContent)
 FetchContent_Declare(
         googletest
